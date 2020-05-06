@@ -1,28 +1,34 @@
 require('dotenv').config();
+
 const Joi = require('@hapi/joi');
 const express = require('express');
 const app = express();
+const coursesRoute = require('./routes/courses');
+
+app.use(express.json());
+
+app.use('/courses', coursesRoute);
 
 app.use(express.json());
 
 const courses = [
-    {id: 1, name: 'Course1'},
-    {id: 2, name: 'Course2'},
-    {id: 3, name: 'Course3'}
+    { id: 1, name: 'Course1' },
+    { id: 2, name: 'Course2' },
+    { id: 3, name: 'Course3' }
 ];
 
-app.get('/',(req,res) => {
+app.get('/', (req, res) => {
     res.send('Hello World!!!!!');
 })
 
-app.get('/api/course',(req, res) => {
+app.get('/api/course', (req, res) => {
     res.send(courses);
 })
 
 // /api/course/id
-app.get('/api/course/:id',(req, res) => {
+app.get('/api/course/:id', (req, res) => {
     let course = courses.find(c => c.id === parseInt(req.params.id));
-    if(!course) return res.status(404).send('The course with given id was not available!');
+    if (!course) return res.status(404).send('The course with given id was not available!');
 
     res.send(course);
 });
@@ -30,7 +36,7 @@ app.get('/api/course/:id',(req, res) => {
 app.post('/api/course', (req, res) => {
 
     const { error, value } = validateCourse(req.body);
-    if(error) {
+    if (error) {
         return res.status(400).send(error.details[0].message);
     }
 
@@ -43,13 +49,13 @@ app.post('/api/course', (req, res) => {
     res.send(course);
 });
 
-app.put('/api/course/:id',(req, res) =>{
+app.put('/api/course/:id', (req, res) => {
     let course = courses.find(c => c.id === parseInt(req.params.id));
-    if(!course) return res.status(404).send('The course with given id was not available!');
+    if (!course) return res.status(404).send('The course with given id was not available!');
 
     //const result = validateCourse(req.body);
     const { error, value } = validateCourse(req.body);
-    if(error) {
+    if (error) {
         return res.status(400).send(error.details[0].message);
     }
 
@@ -57,18 +63,24 @@ app.put('/api/course/:id',(req, res) =>{
     res.send(course);
 });
 
-app.delete('/api/course/:id',(req,res) => {
+app.delete('/api/course/:id', (req, res) => {
     let course = courses.find(c => c.id === parseInt(req.params.id));
-    if(!course) return res.status(404).send('The course with given id was not available!');
+    if (!course) return res.status(404).send('The course with given id was not available!');
 
     const index = courses.indexOf(course);
-    courses.splice(index,1);
+    courses.splice(index, 1);
     res.send(course);
 })
 
+app.handleError = async (res, error, fileName) => {
+    const errorDetails = `${error}`;    
+    res.status(500).json({ errorDetails, 'fileName': fileName });
+};
+
+
 function validateCourse(course) {
     const schema = Joi.object({
-        name:Joi.string().min(3).required()
+        name: Joi.string().min(3).required()
     });
 
     return schema.validate(course);
@@ -76,7 +88,7 @@ function validateCourse(course) {
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT,() => {
+app.listen(PORT, () => {
     console.log(`Listening the port ${PORT}..`);
 });
 
