@@ -1,3 +1,4 @@
+require('dotenv').config();
 const Joi = require('@hapi/joi');
 const express = require('express');
 const app = express();
