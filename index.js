@@ -1,15 +1,14 @@
 require('dotenv').config();
-
-const Joi = require('@hapi/joi');
+const morgan = require('morgan');
+const winston = require('./config/winston');
 const express = require('express');
+
 const app = express();
 const coursesRoute = require('./routes/courses');
 
 app.use(express.json());
-
-app.use('/courses', coursesRoute);
-
-app.use(express.json());
+app.use(morgan('combined', { stream: winston.stream }));
+app.use('/api/courses', coursesRoute);
 
 const courses = [
     { id: 1, name: 'Course1' },
@@ -29,17 +28,10 @@ app.get('/api/course', (req, res) => {
 app.get('/api/course/:id', (req, res) => {
     let course = courses.find(c => c.id === parseInt(req.params.id));
     if (!course) return res.status(404).send('The course with given id was not available!');
-
     res.send(course);
 });
 
 app.post('/api/course', (req, res) => {
-
-    const { error, value } = validateCourse(req.body);
-    if (error) {
-        return res.status(400).send(error.details[0].message);
-    }
-
     const course = {
         id: courses.length + 1,
         name: req.body.name
@@ -49,19 +41,7 @@ app.post('/api/course', (req, res) => {
     res.send(course);
 });
 
-app.put('/api/course/:id', (req, res) => {
-    let course = courses.find(c => c.id === parseInt(req.params.id));
-    if (!course) return res.status(404).send('The course with given id was not available!');
 
-    //const result = validateCourse(req.body);
-    const { error, value } = validateCourse(req.body);
-    if (error) {
-        return res.status(400).send(error.details[0].message);
-    }
-
-    course.name = req.body.name;
-    res.send(course);
-});
 
 app.delete('/api/course/:id', (req, res) => {
     let course = courses.find(c => c.id === parseInt(req.params.id));
@@ -73,18 +53,13 @@ app.delete('/api/course/:id', (req, res) => {
 })
 
 app.handleError = async (res, error, fileName) => {
-    const errorDetails = `${error}`;    
+    const errorDetails = `${error}`;
+    // add this line to include winston logging
+    winston.error(`{err.status || 500} - ${error.message}`);
+
     res.status(500).json({ errorDetails, 'fileName': fileName });
 };
 
-
-function validateCourse(course) {
-    const schema = Joi.object({
-        name: Joi.string().min(3).required()
-    });
-
-    return schema.validate(course);
-}
 
 const PORT = process.env.PORT || 3000;
 
