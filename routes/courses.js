@@ -10,8 +10,8 @@ const handleError = (req, res, error) =>
 const sqlConnection = {
   "server": process.env.DB_SERVER,
   //"port": parseInt(process.env.DB_PORT),
-  "driver": "msnodesqlv8",
-  "database": "LearningDB",
+  "driver": process.env.DB_DRIVER,
+  "database": process.env.DB_DATABASE,
   "user": process.env.DB_USER,
   "password": process.env.DB_PASS
 };
@@ -23,12 +23,11 @@ router.get('/', async function (req, res) {
 
     // create Request object
     const request = new sql.Request(connection);
-
-    const query = 'SELECT * FROM [dbo].[tbl_course];';
-
+    const query = 'SELECT * FROM [dbo].[stbl_course];';
     // query to the database and get the records
     request.query(query, function (err, result) {
       if (err) {
+        res.send(err);
         handleError(req, res, err);
       }
       // send records as a response
